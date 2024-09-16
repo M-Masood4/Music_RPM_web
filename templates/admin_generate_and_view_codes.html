@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block main_content %}
+<h2>Admin: Generate and View Access Codes</h2>
+
+<!-- Form to generate new codes -->
+<form method="POST" action="{{ url_for('generate_and_view_codes') }}">
+    <p>
+        <button type="submit">Generate 10 New Codes</button>
+    </p>
+</form>
+
+<!-- Display sorting options -->
+<p>Sort by:
+    <a href="{{ url_for('generate_and_view_codes', sort='newest') }}">Newest Used</a> |
+    <a href="{{ url_for('generate_and_view_codes', sort='oldest') }}">Oldest Used</a> |
+    <a href="{{ url_for('generate_and_view_codes', sort='expiring_soon') }}">Expiring Soon</a>
+</p>
+
+<!-- Display unused codes -->
+<h3>Unused Codes</h3>
+{% if unused_codes %}
+    <ul>
+        {% for code in unused_codes %}
+            <li>{{ code['code'] }} (Not Used)</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No unused codes available.</p>
+{% endif %}
+
+<!-- Display used codes -->
+<h3>Used Codes</h3>
+{% if used_codes %}
+    <ul>
+        {% for code in used_codes %}
+            <li>
+                Code: {{ code['code'] }} 
+                (Used by: {{ code['user_id'] }} on {{ code['used_date'].strftime('%Y-%m-%d %H:%M') }}) 
+                - Expires on: {{ code['expiry_date'].strftime('%Y-%m-%d %H:%M') }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No used codes available.</p>
+{% endif %}
+
+{% endblock %}

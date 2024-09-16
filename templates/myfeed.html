@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block main_content %}
+
+<h1>My Feed</h1>
+
+{% for entry in entries %}
+<main>
+    <img src="{{ url_for('profile_picture') }}" alt="Profile Picture" class="pfp">
+    <p>{{ entry.entry_text }}</p>
+    <img src="{{ url_for('serve_image', id=entry.id) }}" alt="Image for Entry {{ entry.id }}">
+</main>
+{% else %}
+<p>No entries found.</p>
+{% endfor %}
+
+
+
+{% endblock %}

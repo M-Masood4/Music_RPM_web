@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block main_content %}
+
+<h2>Account Settings</h2>
+
+<!-- Linked Channels Section -->
+<h3>Linked Channels</h3>
+<ul>
+    {% for channel in linked_channels %}
+        <li>
+            <strong>Channel URL:</strong> <a href="{{ channel.channel_url }}">{{ channel.channel_url }}</a><br>
+            <strong>Verification Code:</strong> {{ channel.verification_code }}<br>
+            <strong>Status:</strong> {{ 'Verified' if channel.verified else 'Not Verified' }}
+        </li>
+    {% else %}
+        <p>No linked channels found.</p>
+    {% endfor %}
+</ul>
+
+<h3>Account Details</h3>
+<p><strong>Username:</strong> {{ user.username }}</p>
+
+<form action="{{ url_for('change_password') }}" method="post" id="password">
+    <label for="new_password">New Password:</label>
+    <input type="password" name="new_password" id="new_password"><br><br>
+    <input type="submit" value="Change Password" class="submit">
+</form>
+
+{% endblock %}

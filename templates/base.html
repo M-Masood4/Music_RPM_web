@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social-Musique</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <a href="#home"><img src="{{ url_for('static', filename='name.png') }}" alt="Social-Musique Logo"
+                    class="name"></a>
+        </div>
+
+
+        <!-- Navigation bar -->
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <!-- <div class="navbar-header">
+                    <a class="navbar-brand">Music App</a>
+                </div> -->
+                <ul class="nav navbar-nav">
+                    {% if g.user %}
+                    {% if g.user.is_admin %}
+                    <li><a href="{{ url_for('upload_music') }}">Upload Music (Admin Only)</a></li>
+                    <li><a href="{{ url_for('admin_panel') }}">Approve Music (Admin Only)</a></li>
+                    <li><a href="{{ url_for('admin_verified_channels') }}">Verified Channels (Admin Only)</a></li>
+                    <li><a href="{{ url_for('generate_and_view_codes') }}">Generate Code (Admin Only)</a></li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    {% if g.user %}
+                    <li><a href="{{ url_for('revenue') }}"><span class="glyphicon glyphicon-usd"></span> Revenue</a>
+                    </li>
+                    <li><a href="{{ url_for('music') }}"><span class="glyphicon glyphicon-music"></span> Music</a></li>
+                    <li><a href="{{ url_for('submit_youtube_channel') }}"><span class="glyphicon glyphicon-link"></span>
+                            Link Channel</a></li>
+                    <li><a href="{{ url_for('account') }}"><span class="glyphicon glyphicon-user"></span> Account</a>
+                    </li>
+                    <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> Logout</a>
+                    </li>
+                    {% else %}
+                    <li><a href="{{ url_for('register') }}"><span class="glyphicon glyphicon-user"></span> Sign Up</a>
+                    </li>
+                    <li><a href="{{ url_for('login') }}"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Block -->
+    <main>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+
+        {% block main_content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Social-Musique</p>
+    </footer>
+</body>
+
+</html>

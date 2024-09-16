@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block main_content %}
+<h2>Admin Panel</h2>
+<table>
+    <thead>
+        <tr>
+            <th>YouTube Channel URL</th>
+            <th>Verification Code</th>
+            <th>User ID</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for channel in channels %}
+        <tr>
+            <td>{{ channel['channel_url'] }}</td>
+            <td>{{ channel['verification_code'] }}</td>
+            <td>{{ channel['user_id'] }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('admin_approve_channel', channel_url=channel['channel_url']) }}">
+                    <button type="submit">Approve</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_disapprove_channel', channel_url=channel['channel_url']) }}">
+                    <button type="submit">Disapprove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

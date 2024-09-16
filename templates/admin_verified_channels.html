@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block main_content %}
+<h2>Verified YouTube Channels</h2>
+<table>
+    <thead>
+        <tr>
+            <th>YouTube Channel URL</th>
+            <th>User ID</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for channel in verified_channels %}
+        <tr>
+            <td>{{ channel['channel_url'] }}</td>
+            <td>{{ channel['user_id'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

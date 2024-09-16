@@ -1,0 +1,39 @@
+<!-- admin_dashboard.html -->
+
+{% extends "base.html" %}
+{% block main_content %}
+<h1>Admin Dashboard</h1>
+<form method="POST" enctype="multipart/form-data">
+    <table>
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>RPM</th>
+                <th>Revenue</th>
+                <th>YouTube Image</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users_data %}
+            <tr>
+                <td>{{ user['user_id'] }}</td>
+                <td><input type="text" name="rpm" value="{{ user['rpm'] }}"></td>
+                <td><input type="text" name="revenue" value="{{ user['revenue'] }}"></td>
+                <td>
+                    {% if user['youtube_image'] %}
+                    <img src="{{ url_for('serve_youtube_image', user_id=user['user_id']) }}" alt="YouTube" height="50">
+                    {% endif %}
+                    <input type="file" name="youtube_image">
+                </td>
+                <td>
+                    <button type="submit" name="user_id" value="{{ user['user_id'] }}">Update</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+
+
+{% endblock %}

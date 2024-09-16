@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block main_content %}
+<h2>Music Collection</h2>
+
+<!-- Search and Filter Form -->
+<form method="GET" action="/music" class="music-search-form">
+    <input type="text" name="search" placeholder="Search for music..." value="{{ request.args.get('search', '') }}" class="search-input">
+    
+    <select name="genre" class="genre-select">
+        <option value="">All Genres</option>
+        {% for genre in genres %}
+            <option value="{{ genre }}" {% if request.args.get('genre') == genre %}selected{% endif %}>{{ genre }}</option>
+        {% endfor %}
+    </select>
+    
+    <select name="order" class="order-select">
+        <option value="newest" {% if request.args.get('order') == 'newest' %}selected{% endif %}>Newest</option>
+        <option value="oldest" {% if request.args.get('order') == 'oldest' %}selected{% endif %}>Oldest</option>
+    </select>
+    
+    <button type="submit" class="search-button">Search</button>
+</form>
+
+<!-- Display Music -->
+<div class="music-container">
+    {% for entry in entries %}
+    <div class="music-item">
+        <h3 class="music-title">{{ entry['filename'] }}</h3>
+        
+        {% if entry['image'] %}
+        <div class="music-cover" style="background-image: url('{{ url_for('serve_music_image', id=entry['id']) }}');"></div>
+        {% endif %}
+        
+        {% if entry['description'] %}
+        <p class="music-description">{{ entry['description'] }}</p>
+        {% else %}
+        <p class="music-description">No description provided.</p>
+        {% endif %}
+        
+        <p><strong>Genre:</strong> {{ entry['genre'] }}</p>
+        
+        <audio controls class="music-audio">
+            <source src="{{ url_for('serve_music', id=entry['id']) }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        
+        <div class="music-buttons">
+            <button class="play-btn">Play</button>
+            <a href="{{ url_for('download_music', id=entry['id']) }}" download class="youtube-link">Use in Short</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

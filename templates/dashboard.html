@@ -1,0 +1,15 @@
+<!-- dashboard.html -->
+
+{% extends "base.html" %}
+{% block main_content %}
+
+<h1>User Dashboard</h1>
+<p>Your RPM: {{ user_data['rpm'] }}</p>
+<p>Your Revenue: {{ user_data['revenue'] }}</p>
+{% if user_data['youtube_image'] %}
+<img src="{{ url_for('serve_youtube_image', user_id=g.user['user_id']) }}" alt="YouTube">
+{% endif %}
+
+
+
+{% endblock %}

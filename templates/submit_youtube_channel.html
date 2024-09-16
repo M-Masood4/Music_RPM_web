@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block main_content %}
+<h2>Submit your YouTube Channel</h2>
+
+<!-- Form to input YouTube Channel URL and display the generated verification code -->
+<form id="youtubeForm" method="POST" action="{{ url_for('submit_youtube_channel') }}">
+    <div>
+        <label for="channel_url">YouTube Channel URL:</label>
+        <input type="url" id="channel_url" name="channel_url" value="{{ channel_url if channel_url else '' }}" required>
+    </div>
+    
+    {% if verification_code %}
+    <div>
+        <label for="verification_code">Verification Code:</label>
+        <input type="text" id="verification_code" name="verification_code" value="{{ verification_code }}" readonly>
+    </div>
+    {% else %}
+    <!-- Hidden input for the verification code -->
+    <input type="hidden" id="verification_code" name="verification_code">
+    {% endif %}
+    
+    <button type="button" onclick="generateCode()">Generate Code</button>
+    <button type="submit">Submit</button>
+</form>
+
+<script>
+function generateCode() {
+    const channelUrl = document.getElementById('channel_url').value;
+    if (channelUrl) {
+        // Redirect to the current page with the channel URL as a query parameter to generate the verification code
+        window.location.href = `{{ url_for('submit_youtube_channel') }}?channel_url=${encodeURIComponent(channelUrl)}`;
+    } else {
+        alert("Please enter your YouTube Channel URL.");
+    }
+}
+</script>
+{% endblock %}

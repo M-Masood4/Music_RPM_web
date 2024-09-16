@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block main_content %}
+<h2>Upload Music</h2>
+<form method="POST" action="{{ url_for('upload_music') }}" enctype="multipart/form-data">
+    <div>
+        <label for="file">Music File:</label>
+        <input type="file" id="file" name="file" accept="audio/*" required>
+    </div>
+    <div>
+        <label for="image">Album Cover (Optional):</label>
+        <input type="file" id="image" name="image" accept="image/*">
+    </div>
+    <div>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description"></textarea>
+    </div>
+    <div>
+        <label for="genre">Genre:</label>
+        <select id="genre" name="genre">
+            <option value="Rock">Rock</option>
+            <option value="Pop">Pop</option>
+            <option value="Jazz">Jazz</option>
+            <option value="Classical">Classical</option>
+            <option value="Hip-Hop">Hip-Hop</option>
+            <option value="Electronic">Electronic</option>
+        </select>
+    </div>
+    <button type="submit">Upload</button>
+</form>
+{% endblock %}
