@@ -59,7 +59,6 @@ def admin_required(view):
 # User registration
 
 
-@app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
 
@@ -97,8 +96,6 @@ def register():
     return render_template('register.html', form=form)
 
 
-
-
 # User login
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -123,6 +120,7 @@ def login():
 
 
 # Helper function to generate unique codes
+# Helper function to generate unique codes
 def generate_unique_codes(count=10, length=8):
     """Generates `count` random alphanumeric codes."""
     codes = []
@@ -144,14 +142,29 @@ def generate_and_view_codes():
         flash(f'{len(codes)} codes generated successfully.')
         return redirect(url_for('generate_and_view_codes'))
 
-    # Fetch all codes and categorize them into used and unused
-    used_codes = db.execute('''
+    # Initialize sorting logic
+    sort = request.args.get('sort', 'newest')  # Default sort by newest
+
+    # Basic query for used codes
+    base_query = '''
         SELECT c.code, uc.user_id, uc.used_date, uc.expiry_date
         FROM codes c
-        JOIN used_codes uc ON c.id = uc.code_id
-        ORDER BY uc.used_date DESC
-    ''').fetchall()
+        LEFT JOIN used_codes uc ON c.id = uc.code_id
+        WHERE uc.used_date IS NOT NULL
+    '''
 
+    # Sorting logic
+    if sort == 'newest':
+        base_query += ' ORDER BY uc.used_date DESC'
+    elif sort == 'oldest':
+        base_query += ' ORDER BY uc.used_date ASC'
+    elif sort == 'expiring_soon':
+        base_query += ' ORDER BY uc.expiry_date ASC'
+    
+    # Execute query and fetch used codes
+    used_codes = db.execute(base_query).fetchall()
+
+    # Query for unused codes
     unused_codes = db.execute('''
         SELECT code 
         FROM codes 
@@ -159,7 +172,7 @@ def generate_and_view_codes():
         ORDER BY code
     ''').fetchall()
 
-    return render_template('admin_generate_and_view_codes.html', used_codes=used_codes, unused_codes=unused_codes)
+    return render_template('admin_generate_and_view_codes.html', used_codes=used_codes, unused_codes=unused_codes, sort=sort)
 
 
 

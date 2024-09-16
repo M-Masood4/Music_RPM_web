@@ -12,21 +12,8 @@
 <!-- Display sorting options -->
 <p>Sort by:
     <a href="{{ url_for('generate_and_view_codes', sort='newest') }}">Newest Used</a> |
-    <a href="{{ url_for('generate_and_view_codes', sort='oldest') }}">Oldest Used</a> |
-    <a href="{{ url_for('generate_and_view_codes', sort='expiring_soon') }}">Expiring Soon</a>
+    <a href="{{ url_for('generate_and_view_codes', sort='oldest') }}">Oldest Used</a>
 </p>
-
-<!-- Display unused codes -->
-<h3>Unused Codes</h3>
-{% if unused_codes %}
-    <ul>
-        {% for code in unused_codes %}
-            <li>{{ code['code'] }} (Not Used)</li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No unused codes available.</p>
-{% endif %}
 
 <!-- Display used codes -->
 <h3>Used Codes</h3>
@@ -42,6 +29,18 @@
     </ul>
 {% else %}
     <p>No used codes available.</p>
+{% endif %}
+
+<!-- Display unused codes -->
+<h3>Unused Codes</h3>
+{% if unused_codes %}
+    <ul>
+        {% for code in unused_codes %}
+            <li>{{ code['code'] }} (Not Used)</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No unused codes available.</p>
 {% endif %}
 
 {% endblock %}
