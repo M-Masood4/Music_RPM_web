@@ -20,6 +20,15 @@
 <h3>Account Details</h3>
 <p><strong>Username:</strong> {{ user.username }}</p>
 
+{% if g.user.subscription_expired %}
+  <p>Your subscription has expired. Please enter a new code to renew your subscription:</p>
+  <form method="post" action="{{ url_for('renew_subscription') }}">
+    <input type="text" name="code" placeholder="Enter new code" required>
+    <button type="submit">Renew</button>
+  </form>
+{% endif %}
+
+
 <form action="{{ url_for('change_password') }}" method="post" id="password">
     <label for="new_password">New Password:</label>
     <input type="password" name="new_password" id="new_password"><br><br>

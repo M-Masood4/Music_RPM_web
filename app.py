@@ -11,8 +11,6 @@ import random
 import string
 
 
-API_KEY = 'AIzaSyDjyLCG4y-FiKiOYnqMMlwfPlA6zr7Xnis'
-
 app = Flask(__name__)
 app.teardown_appcontext(close_db)
 app.config["SECRET_KEY"] = "Masood2024"
@@ -27,14 +25,43 @@ def load_logged_in_user():
         g.user = None
     else:
         db = get_db()
-        user = db.execute('SELECT user_id, is_admin FROM users WHERE user_id = ?', (user_id,)).fetchone()
+        # Fetch the user's details and their most recent used code expiry date
+        user = db.execute('''
+            SELECT u.user_id, u.is_admin, uc.expiry_date 
+            FROM users u
+            LEFT JOIN used_codes uc ON u.user_id = uc.user_id
+            WHERE u.user_id = ?
+            ORDER BY uc.used_date DESC LIMIT 1
+        ''', (user_id,)).fetchone()
+
         if user is None:
             g.user = None
         else:
             g.user = {
                 'user_id': user['user_id'],
-                'is_admin': user['is_admin']
+                'is_admin': user['is_admin'],
+                'subscription_expired': user['expiry_date'] is None or user['expiry_date'] < datetime.now()  # Check if the expiry date has passed
             }
+
+
+# Login required decorator
+def login_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if g.user is None:
+            return redirect(url_for("login", next=request.url))
+
+        # Admins can access all pages without restrictions
+        if g.user.get('is_admin'):
+            return view(*args, **kwargs)
+
+        # Check if the user's subscription is expired or they have no valid code
+        if g.user.get('subscription_expired', True) and request.endpoint != 'account':
+            flash("Your subscription has expired. Please buy a new code to regain access.")
+            return redirect(url_for('account'))  # Only allow access to the account page
+
+        return view(*args, **kwargs)
+    return wrapped_view
 
 # Admin check decorator
 def admin_required(view):
@@ -58,7 +85,7 @@ def admin_required(view):
 
 # User registration
 
-
+@app.route("/register",methods=["GET", "POST"])
 def register():
     form = RegistrationForm()
 
@@ -176,20 +203,36 @@ def generate_and_view_codes():
 
 
 
+
 # Logout
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("index"))
 
-# Login required decorator
-def login_required(view):
-    @wraps(view)
-    def wrapped_view(*args, **kwargs):
-        if g.user is None:
-            return redirect(url_for("login", next=request.url))
-        return view(*args, **kwargs)
-    return wrapped_view
+
+
+@app.route('/renew_subscription', methods=['POST'])
+@login_required
+def renew_subscription():
+    code = request.form.get('code')
+    db = get_db()
+
+    # Validate the code
+    code_data = db.execute('SELECT * FROM codes WHERE code = ?', (code,)).fetchone()
+    if not code_data:
+        flash('Invalid code.')
+        return redirect(url_for('account'))
+
+    expiry_date = datetime.now() + timedelta(days=30)  # Extend by 30 days
+
+    # Record the new code usage
+    db.execute('INSERT INTO used_codes (code_id, user_id, used_date, expiry_date) VALUES (?, ?, ?, ?)',
+               (code_data['id'], g.user['user_id'], datetime.now(), expiry_date))
+    db.commit()
+
+    flash('Subscription renewed successfully!')
+    return redirect(url_for('index'))
 
 @app.route('/upload_music', methods=['GET', 'POST'])
 @admin_required
@@ -223,6 +266,7 @@ def upload_music():
     return render_template('upload_music.html')
 
 @app.route('/download_music/<int:id>')
+@login_required
 def download_music(id):
     db = get_db()
     music = db.execute('SELECT filename, file FROM music WHERE id = ?', (id,)).fetchone()
@@ -233,6 +277,7 @@ def download_music(id):
         abort(404)
 
 @app.route('/serve_music_image/<int:id>')
+@login_required
 def serve_music_image(id):
     db = get_db()
     music = db.execute('SELECT image FROM music WHERE id = ?', (id,)).fetchone()
@@ -245,6 +290,7 @@ def serve_music_image(id):
 
 
 @app.route('/serve_music/<int:id>')
+@login_required
 def serve_music(id):
     db = get_db()
     music = db.execute('SELECT file FROM music WHERE id = ?', (id,)).fetchone()
@@ -256,6 +302,7 @@ def serve_music(id):
 
 # Music search and filtering
 @app.route('/music', methods=['GET'])
+@login_required
 def music():
     search_query = request.args.get('search', '')
     genre_filter = request.args.get('genre', '')
@@ -289,15 +336,17 @@ def music():
 def index():
     # If the user is logged in
     if g.user:
-        # If the user is an admin, redirect to the admin panel
-        if g.user['is_admin']:
-            return redirect(url_for('admin_panel'))
-        # If the user is a normal user, redirect to the music page
+        if g.user['subscription_expired']:
+            flash('Your subscription has expired. Please renew to regain access.')
+            return redirect(url_for('account'))  # Redirect expired users to the account page
+        elif g.user['is_admin']:
+            return redirect(url_for('admin_panel'))  # Admin users
         else:
-            return redirect(url_for('music'))
-    
+            return redirect(url_for('music'))  # Normal users with active subscriptions
+
     # If the user is not logged in, show the index page
     return render_template('index.html')
+
 
 @app.route('/account', methods=['GET', 'POST'])
 @login_required
@@ -351,45 +400,10 @@ def is_channel_verified(channel_url):
     return bool(channel)
 
 
-
 @app.route('/submit_youtube_channel', methods=['GET', 'POST'])
 @login_required
 def submit_youtube_channel():
-    db = get_db()
-    
-    if request.method == 'POST':
-        # This handles the final submission
-        channel_url = request.form['channel_url']
-        verification_code = request.form['verification_code']
-        
-        # Check if the channel has already been verified
-        if is_channel_verified(channel_url):
-            flash('This channel is already verified.')
-            return redirect(url_for('submit_youtube_channel'))
-
-        # Check for duplicates
-        existing_channel = db.execute("SELECT * FROM youtube_channels WHERE channel_url = ?", (channel_url,)).fetchone()
-        if existing_channel:
-            flash('This channel has already been submitted for verification.')
-            return redirect(url_for('submit_youtube_channel'))
-
-        # Save the new channel submission with verification code
-        user_id = g.user['user_id']
-        db.execute("INSERT INTO youtube_channels (channel_url, verification_code, user_id, submission_time, verified) VALUES (?, ?, ?, ?, ?)", 
-                   (channel_url, verification_code, user_id, datetime.utcnow(), 0))
-        db.commit()
-
-        flash('Your channel has been submitted for verification.')
-        return redirect(url_for('submit_youtube_channel'))
-    
-    # Generate a verification code on GET or after URL entry
-    if 'channel_url' in request.args:
-        channel_url = request.args.get('channel_url')
-        verification_code = generate_verification_code()
-        return render_template('submit_youtube_channel.html', channel_url=channel_url, verification_code=verification_code)
-    
     return render_template('submit_youtube_channel.html')
-
 
 
 @app.route('/verify_youtube_channel', methods=['POST'])
@@ -466,6 +480,7 @@ def admin_verified_channels():
 
 
 @app.route('/revenue')
+@login_required
 def revenue():
     return render_template('revenue.html')
 
