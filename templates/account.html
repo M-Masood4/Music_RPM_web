@@ -1,8 +1,25 @@
 {% extends "base.html" %}
 {% block main_content %}
 
-<h2>Account Settings</h2>
 
+
+<h2>Account Information</h2>
+
+<p><strong>Username:</strong> {{ user['username'] }}</p>
+<p><strong>Email:</strong> {{ user['email'] }}</p>
+
+<h3>Music RPM Information</h3>
+<p><strong>RPM:</strong> {{ music_rpm_info['rpm'] }}</p>
+<p><strong>Revenue:</strong> {{ music_rpm_info['revenue'] }}</p>
+
+{% if music_rpm_info['youtube_image'] %}
+    <h3>YouTube Image:</h3>
+    <img src="data:image/png;base64,{{ music_rpm_info['youtube_image'] | b64encode }}" alt="YouTube Image">
+{% else %}
+    <p>No YouTube Image Available</p>
+{% endif %}
+
+<h2>Account Settings</h2>
 <!-- Linked Channels Section -->
 <h3>Linked Channels</h3>
 <ul>

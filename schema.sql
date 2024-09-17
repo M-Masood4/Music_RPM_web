@@ -5,6 +5,15 @@ CREATE TABLE users (
     user_id TEXT PRIMARY KEY,
     password TEXT NOT NULL
 );
+ALTER TABLE users ADD COLUMN last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+PRAGMA table_info(users);
+
+ALTER TABLE users ADD COLUMN username TEXT;
+ALTER TABLE users ADD COLUMN last_updated TIMESTAMP;
+
+UPDATE users SET last_updated = CURRENT_TIMESTAMP WHERE last_updated IS NULL;
+
 
 DROP TABLE IF EXISTS youtube_channels;
 

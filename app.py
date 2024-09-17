@@ -355,13 +355,19 @@ def account():
     db = get_db()
 
     # Fetch user details
-    user = db.execute('SELECT user_id FROM users WHERE user_id = ?', (user_id,)).fetchone()
+    user = db.execute('SELECT * FROM users WHERE user_id = ?', (user_id,)).fetchone()
 
     # Fetch linked YouTube channels
     linked_channels = db.execute(
         'SELECT channel_url, verification_code, verified FROM youtube_channels WHERE user_id = ?',
         (user_id,)
     ).fetchall()
+
+    # Fetch RPM, revenue, and YouTube image from the music_rpm table
+    music_rpm_info = db.execute(
+        'SELECT rpm, revenue, youtube_image FROM music_rpm WHERE user_id = ?',
+        (user_id,)
+    ).fetchone()
 
     if request.method == 'POST':
         # Handle password change logic
@@ -372,7 +378,8 @@ def account():
             flash('Password updated successfully!')
             return redirect(url_for('account'))
 
-    return render_template('account.html', user=user, linked_channels=linked_channels)
+    return render_template('account.html', user=user, linked_channels=linked_channels, music_rpm_info=music_rpm_info)
+
 
 
 # Change password
@@ -403,7 +410,41 @@ def is_channel_verified(channel_url):
 @app.route('/submit_youtube_channel', methods=['GET', 'POST'])
 @login_required
 def submit_youtube_channel():
+    db = get_db()
+    
+    if request.method == 'POST':
+        # This handles the final submission
+        channel_url = request.form['channel_url']
+        verification_code = request.form['verification_code']
+        
+        # Check if the channel has already been verified
+        if is_channel_verified(channel_url):
+            flash('This channel is already verified.')
+            return redirect(url_for('submit_youtube_channel'))
+
+        # Check for duplicates
+        existing_channel = db.execute("SELECT * FROM youtube_channels WHERE channel_url = ?", (channel_url,)).fetchone()
+        if existing_channel:
+            flash('This channel has already been submitted for verification.')
+            return redirect(url_for('submit_youtube_channel'))
+
+        # Save the new channel submission with verification code
+        user_id = g.user['user_id']
+        db.execute("INSERT INTO youtube_channels (channel_url, verification_code, user_id, submission_time, verified) VALUES (?, ?, ?, ?, ?)", 
+                   (channel_url, verification_code, user_id, datetime.utcnow(), 0))
+        db.commit()
+
+        flash('Your channel has been submitted for verification.')
+        return redirect(url_for('submit_youtube_channel'))
+    
+    # Generate a verification code on GET or after URL entry
+    if 'channel_url' in request.args:
+        channel_url = request.args.get('channel_url')
+        verification_code = generate_verification_code()
+        return render_template('submit_youtube_channel.html', channel_url=channel_url, verification_code=verification_code)
+    
     return render_template('submit_youtube_channel.html')
+
 
 
 @app.route('/verify_youtube_channel', methods=['POST'])
@@ -484,6 +525,56 @@ def admin_verified_channels():
 def revenue():
     return render_template('revenue.html')
 
+@app.route('/admin/update_account', methods=['GET', 'POST'])
+@login_required
+def update_account():
+    # Ensure only admins can access this route
+    if not g.user['is_admin']:
+        return redirect(url_for('account'))
 
+    db = get_db()
 
+    # Fetch search query and sort order from the request
+    search_query = request.args.get('search', '')
+    sort_order = request.args.get('sort', 'last_updated')
 
+    # Query users based on the search query, sorting by last_updated or username
+    users = db.execute(
+        'SELECT u.user_id, u.username, u.last_updated, m.rpm, m.revenue '
+        'FROM users u LEFT JOIN music_rpm m ON u.user_id = m.user_id '
+        'WHERE u.username LIKE ? '
+        'ORDER BY ' + sort_order + ' DESC',
+        ('%' + search_query + '%',)
+    ).fetchall()
+
+    # Handle the form submission (POST request)
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        rpm = request.form.get('rpm')
+        revenue = request.form.get('revenue')
+        new_password = request.form.get('password')
+
+        # Update RPM if present
+        if rpm is not None:
+            rpm = float(rpm)
+            db.execute('UPDATE music_rpm SET rpm = ? WHERE user_id = ?', (rpm, user_id))
+
+        # Update Revenue if present
+        if revenue is not None:
+            revenue = float(revenue)
+            db.execute('UPDATE music_rpm SET revenue = ? WHERE user_id = ?', (revenue, user_id))
+
+        # Update YouTube image if uploaded
+        file = request.files.get('youtube_image')
+        if file and file.filename != '':
+            youtube_image = file.read()
+            db.execute('UPDATE music_rpm SET youtube_image = ? WHERE user_id = ?', (youtube_image, user_id))
+
+        # Update last_updated timestamp
+        db.execute('UPDATE users SET last_updated = CURRENT_TIMESTAMP WHERE user_id = ?', (user_id,))
+        db.commit()
+
+        flash('User account updated successfully!')
+        return redirect(url_for('update_account'))
+
+    return render_template('admin_update_account.html', users=users)

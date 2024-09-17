@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block main_content %}
+
+<!-- Search form to filter users by username -->
+<form method="GET" action="{{ url_for('update_account') }}">
+    <input type="text" name="search" placeholder="Search by username" value="{{ request.args.get('search', '') }}">
+    <button type="submit">Search</button>
+    <select name="sort" onchange="this.form.submit()">
+        <option value="last_updated" {% if request.args.get('sort') == 'last_updated' %}selected{% endif %}>Last Updated</option>
+        <option value="username" {% if request.args.get('sort') == 'username' %}selected{% endif %}>Username</option>
+    </select>
+</form>
+
+<table>
+    <tr>
+        <th>Username</th>
+        <th>RPM</th>
+        <th>Revenue</th>
+        <th>Upload YouTube Image</th>
+        <th>Last Updated</th>
+    </tr>
+    {% for user in users %}
+    <tr>
+        <td>{{ user.username }}</td>
+
+        <!-- RPM Update -->
+        <td>
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="user_id" value="{{ user.user_id }}">
+                <input type="text" name="rpm" placeholder="RPM" value="{{ user.rpm or 0 }}">
+                <button type="submit">Update RPM</button>
+            </form>
+        </td>
+
+        <!-- Revenue Update -->
+        <td>
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="user_id" value="{{ user.user_id }}">
+                <input type="text" name="revenue" placeholder="Revenue" value="{{ user.revenue or 0 }}">
+                <button type="submit">Update Revenue</button>
+            </form>
+        </td>
+
+        <!-- YouTube Image Upload -->
+        <td>
+            <form method="POST" enctype="multipart/form-data" style="display: inline;">
+                <input type="hidden" name="user_id" value="{{ user.user_id }}">
+                <input type="file" name="youtube_image">
+                <button type="submit">Upload Image</button>
+            </form>
+        </td>
+
+        <!-- Last Updated (Display only) -->
+        <td>{{ user.last_updated }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
