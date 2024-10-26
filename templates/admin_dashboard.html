@@ -21,9 +21,11 @@
                 <td><input type="text" name="rpm" value="{{ user['rpm'] }}"></td>
                 <td><input type="text" name="revenue" value="{{ user['revenue'] }}"></td>
                 <td>
-                    {% if user['youtube_image'] %}
-                    <img src="{{ url_for('serve_youtube_image', user_id=user['user_id']) }}" alt="YouTube" height="50">
-                    {% endif %}
+                    {% if user.youtube_image %}
+                    <img src="data:image/jpeg;base64,{{ user.youtube_image | b64encode }}" alt="YouTube Image">
+                {% else %}
+                    <p>No image available</p>
+                {% endif %}                
                     <input type="file" name="youtube_image">
                 </td>
                 <td>

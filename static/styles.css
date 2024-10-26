@@ -1,23 +1,13 @@
 /* Reset styles */
-body,
-h1,
-p,
-ul,
-li {
+body, h1, p, ul, li {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-main {
-  margin-top: 150px;
-}
-
 /* Basic styles */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-image: url('background.png');
-  background-position: center;
   background-color: #181620;
   color: #fff;
   display: flex;
@@ -27,13 +17,17 @@ body {
   min-height: 100vh;
 }
 
+main {
+  margin-top: 150px;
+}
+
 /* Header styles */
 header {
   width: 100%;
   display: flex;
   align-items: center;
   padding: 20px 40px;
-  background: #181620;
+  background-color: #181620;
   position: fixed;
   top: 0;
   z-index: 1000;
@@ -47,10 +41,9 @@ header {
 
 /* Navigation styles */
 nav {
+  width: 100%;
   display: flex;
   justify-content: center;
-  /* Center the nav bar */
-  width: 100%;
 }
 
 .container-fluid {
@@ -59,33 +52,31 @@ nav {
   align-items: center;
   width: 100%;
   padding: 0 40px;
-  /* Adjust for spacing */
 }
 
 .navbar-nav {
   display: flex;
   justify-content: space-around;
-  /* Ensure even spacing between links */
   flex-grow: 1;
 }
 
 .navbar-nav li {
   margin: 0 10px;
-  /* Optional: Adjust spacing between links */
 }
 
-.navbar-nav li a {
+.navbar-nav li a,
+.navbar-right li a {
   color: #a7a6b5;
   text-decoration: none;
   font-weight: bold;
   transition: color 0.3s;
 }
 
-.navbar-nav li a:hover {
+.navbar-nav li a:hover,
+.navbar-right li a:hover {
   color: #fff;
 }
 
-/* Right aligned navbar links */
 .navbar-right {
   display: flex;
   justify-content: flex-end;
@@ -93,47 +84,31 @@ nav {
 
 .navbar-right li {
   margin-left: 15px;
-  /* Add space between right-side links */
 }
 
-.navbar-right li a {
-  color: #a7a6b5;
-  transition: color 0.3s;
-}
-
-.navbar-right li a:hover {
-  color: #fff;
-}
-
-
-/* Container for the entire form */
+/* Form styles */
 form {
   background-color: #1f1b29;
   border-radius: 10px;
   padding: 40px;
   max-width: 500px;
   margin: 100px auto;
-  /* Centers the form */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* Form title */
 form h2 {
   text-align: center;
-  color: #fff;
   font-size: 24px;
   margin-bottom: 30px;
 }
 
-/* General label styling */
 form label {
   display: block;
-  color: #a7a6b5;
-  font-weight: bold;
   margin-bottom: 8px;
+  font-weight: bold;
+  color: #a7a6b5;
 }
 
-/* General input and select styling */
 form input[type="file"],
 form select,
 form textarea {
@@ -147,19 +122,17 @@ form textarea {
   font-size: 16px;
 }
 
-/* Textarea customization */
 form textarea {
+  height: 150px;
   resize: none;
-  height: 100px;
 }
 
-/* Submit button styling */
 form button {
   display: block;
   width: 100%;
   padding: 12px;
   background-color: #5c5bb7;
-  color: #fff;
+  color: white;
   font-size: 18px;
   border: none;
   border-radius: 5px;
@@ -171,7 +144,6 @@ form button:hover {
   background-color: #4a4ab0;
 }
 
-/* Optional: Input field hover/focus styles */
 form input[type="file"]:hover,
 form select:hover,
 form textarea:hover,
@@ -182,133 +154,20 @@ form textarea:focus {
   outline: none;
 }
 
-/* Style for each form input wrapper */
-form div {
-  margin-bottom: 25px;
-}
-
-
-/* Description box fixed dimensions */
-form textarea {
-  width: 100%;
-  /* Full width within the form */
-  max-width: 100%;
-  /* Prevent expansion beyond the form */
-  height: 150px;
-  /* Set height */
-  resize: none;
-  /* Disable resizing */
-  padding: 10px;
-  border: 2px solid #a7a6b5;
-  border-radius: 5px;
-  background-color: #2c2936;
-  color: #fff;
-  font-size: 16px;
-}
-
-
-
-.verification-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #2e2d36;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
-  flex-wrap: nowrap;
-  /* Ensure the flex items don't wrap */
-}
-
-.verification-details {
-  flex-grow: 1;
-  color: #ffffff;
-  margin-right: 10px;
-  /* Space between the text and buttons */
-}
-
-.verification-actions {
-  display: flex;
-  flex-wrap: nowrap;
-  /* Prevent wrapping */
-  justify-content: flex-end;
-  /* Ensure buttons align properly */
-  gap: 10px;
-}
-
-.approve-btn,
-.disapprove-btn {
-  background-color: #6c63ff;
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  min-width: 100px;
-  text-align: center;
-  /* Center text inside buttons */
-}
-
-.approve-btn:hover {
-  background-color: #5a52e0;
-}
-
-.disapprove-btn:hover {
-  background-color: #e05252;
-}
-
-button {
-  outline: none;
-}
-
-/* Reset styles */
-body,
-h1,
-p,
-ul,
-li {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-main {
-  margin-top: 150px;
-}
-
-/* Basic styles */
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #181620;
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  min-height: 100vh;
-}
-
+/* Music container and item styling */
 .music-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  /* Responsive grid layout */
   gap: 20px;
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Music item styling */
 .music-item {
   background-color: #1f1b29;
   border-radius: 10px;
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease;
@@ -316,13 +175,11 @@ body {
 
 .music-item:hover {
   transform: scale(1.05);
-  /* Slight hover effect */
 }
 
 .music-title {
   font-size: 18px;
   font-weight: bold;
-  color: #fff;
   margin-bottom: 10px;
 }
 
@@ -341,21 +198,18 @@ body {
   font-size: 14px;
   margin-bottom: 20px;
   min-height: 60px;
-  /* Ensure space even if no description */
 }
 
 .music-buttons {
   display: flex;
   justify-content: space-between;
-  width: 100%;
+  margin-top: 10px;
 }
 
 .music-buttons a,
 .music-buttons button {
-  display: inline-block;
   padding: 10px;
   color: white;
-  background-color: #6c63ff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -367,23 +221,19 @@ body {
 
 .music-buttons a:hover,
 .music-buttons button:hover {
-  background-color: #5a52e0;
+  opacity: 0.8;
 }
 
-.music-buttons .play-btn {
-  background-color: #5c5bb7;
+.use-short-btn {
+  background-color: #ff4d4d;
 }
 
-.music-buttons .play-btn:hover {
-  background-color: #4a4ab0;
+.delete-btn {
+  background-color: red;
 }
 
-.music-buttons .youtube-link {
-  background-color: #ff5c5c;
-}
-
-.music-buttons .youtube-link:hover {
-  background-color: #e05252;
+.delete-btn:hover {
+  background-color: darkred;
 }
 
 /* Responsive adjustments */
@@ -393,5 +243,3 @@ body {
     gap: 10px;
   }
 }
-
-

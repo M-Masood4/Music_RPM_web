@@ -7,6 +7,11 @@ CREATE TABLE users (
 );
 ALTER TABLE users ADD COLUMN last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
+ALTER TABLE users ADD COLUMN username TEXT;
+
+UPDATE users SET username = user_id WHERE username IS NULL;
+
+
 PRAGMA table_info(users);
 
 ALTER TABLE users ADD COLUMN username TEXT;
@@ -51,7 +56,7 @@ CREATE TABLE youtube_channels (
 
 
 SELECT *
-FROM music
+FROM users
 
 
 DROP TABLE IF EXISTS music_rpm;
@@ -64,6 +69,23 @@ CREATE TABLE music_rpm (
     youtube_image BLOB,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+PRAGMA TABLE_info(music_rpm)
+
+SELECT *
+from music_rpm
+
+DELETE FROM music_rpm
+WHERE rowid NOT IN (
+    SELECT MIN(rowid)
+    FROM music_rpm
+    GROUP BY user_id
+);
+
+
+INSERT INTO music_rpm (user_id)
+SELECT user_id FROM users
+WHERE user_id NOT IN (SELECT user_id FROM music_rpm);
 
 
 -- Table to store registration codes (without expiry date)
@@ -87,3 +109,16 @@ CREATE TABLE used_codes (
 
 select *
 from used_codes;
+
+
+SELECT u.user_id, u.username, u.last_updated, m.rpm, m.revenue
+FROM users u
+LEFT JOIN music_rpm m ON u.user_id = m.user_id
+LEFT JOIN used_codes c ON u.user_id = c.user_id;
+
+
+
+
+
+select *
+from users

@@ -9,6 +9,8 @@ import io
 from datetime import datetime, timedelta
 import random
 import string
+import base64
+
 
 
 app = Flask(__name__)
@@ -16,6 +18,13 @@ app.teardown_appcontext(close_db)
 app.config["SECRET_KEY"] = "Masood2024"
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+
+
+def b64encode(data):
+    return base64.b64encode(data).decode('utf-8')
+
+# Register the filter in Jinja environment
+app.jinja_env.filters['b64encode'] = b64encode
 
 @app.before_request
 def load_logged_in_user():
@@ -146,7 +155,6 @@ def login():
     return render_template("login.html", form=form)
 
 
-# Helper function to generate unique codes
 # Helper function to generate unique codes
 def generate_unique_codes(count=10, length=8):
     """Generates `count` random alphanumeric codes."""
@@ -299,6 +307,26 @@ def serve_music(id):
         return send_file(io.BytesIO(music['file']), mimetype='audio/mpeg')
     else:
         abort(404)
+
+
+@app.route('/delete_music/<int:id>', methods=['POST'])
+@admin_required
+def delete_music(id):
+    db = get_db()
+    
+    # Check if the music exists
+    music = db.execute('SELECT id FROM music WHERE id = ?', (id,)).fetchone()
+    if not music:
+        flash('Music not found.', 'error')
+        return redirect(url_for('music'))
+    
+    # Delete the music from the database
+    db.execute('DELETE FROM music WHERE id = ?', (id,))
+    db.commit()
+    
+    flash('Music deleted successfully!')
+    return redirect(url_for('music'))
+
 
 # Music search and filtering
 @app.route('/music', methods=['GET'])
@@ -525,56 +553,88 @@ def admin_verified_channels():
 def revenue():
     return render_template('revenue.html')
 
+
+@app.before_request
+def initialize_music_rpm():
+    db = get_db()
+    db.execute('''
+        INSERT OR IGNORE INTO music_rpm (user_id)
+        SELECT user_id FROM users
+    ''')
+    db.commit()
+
+
 @app.route('/admin/update_account', methods=['GET', 'POST'])
 @login_required
 def update_account():
-    # Ensure only admins can access this route
     if not g.user['is_admin']:
         return redirect(url_for('account'))
 
     db = get_db()
 
-    # Fetch search query and sort order from the request
+    # Fetch search query and sort order
     search_query = request.args.get('search', '')
     sort_order = request.args.get('sort', 'last_updated')
 
-    # Query users based on the search query, sorting by last_updated or username
-    users = db.execute(
-        'SELECT u.user_id, u.username, u.last_updated, m.rpm, m.revenue '
-        'FROM users u LEFT JOIN music_rpm m ON u.user_id = m.user_id '
-        'WHERE u.username LIKE ? '
-        'ORDER BY ' + sort_order + ' DESC',
-        ('%' + search_query + '%',)
-    ).fetchall()
+    # Validate the sort order to avoid SQL injection
+    if sort_order not in ['last_updated', 'username', 'is_premium']:
+        sort_order = 'last_updated'
 
-    # Handle the form submission (POST request)
-    if request.method == 'POST':
-        user_id = request.form.get('user_id')
-        rpm = request.form.get('rpm')
-        revenue = request.form.get('revenue')
-        new_password = request.form.get('password')
+    # Query to fetch users with their RPM, Revenue, and Premium status
+    query = '''
+    SELECT u.user_id, u.last_updated, m.rpm, m.revenue,
+        CASE WHEN c.expiry_date > CURRENT_TIMESTAMP THEN 1 ELSE 0 END AS is_premium
+    FROM users u
+    LEFT JOIN music_rpm m ON u.user_id = m.user_id
+    LEFT JOIN used_codes c ON u.user_id = c.user_id
+    WHERE u.user_id LIKE ?
+    GROUP BY u.user_id
+    ORDER BY {} DESC
+    '''.format(sort_order)
 
-        # Update RPM if present
-        if rpm is not None:
-            rpm = float(rpm)
-            db.execute('UPDATE music_rpm SET rpm = ? WHERE user_id = ?', (rpm, user_id))
+    # Pass the search query to filter usernames
+    users = db.execute(query, ('%' + search_query + '%',)).fetchall()
 
-        # Update Revenue if present
-        if revenue is not None:
-            revenue = float(revenue)
-            db.execute('UPDATE music_rpm SET revenue = ? WHERE user_id = ?', (revenue, user_id))
+    return render_template('admin_update_account.html', users=users, search_query=search_query, sort_order=sort_order)
 
-        # Update YouTube image if uploaded
-        file = request.files.get('youtube_image')
-        if file and file.filename != '':
-            youtube_image = file.read()
-            db.execute('UPDATE music_rpm SET youtube_image = ? WHERE user_id = ?', (youtube_image, user_id))
+# Route to update RPM
+@app.route('/update_rpm', methods=['POST'])
+def update_rpm():
+    user_id = request.form['user_id']
+    new_rpm = request.form['rpm']
+    
+    db = get_db()
+    db.execute('UPDATE music_rpm SET rpm = ? WHERE user_id = ?', (new_rpm, user_id))
+    db.execute('UPDATE users SET last_updated = CURRENT_TIMESTAMP WHERE user_id = ?', (user_id,))
+    db.commit()
 
-        # Update last_updated timestamp
-        db.execute('UPDATE users SET last_updated = CURRENT_TIMESTAMP WHERE user_id = ?', (user_id,))
-        db.commit()
+    flash('RPM updated successfully!')
+    return redirect(url_for('update_account'))
 
-        flash('User account updated successfully!')
-        return redirect(url_for('update_account'))
+# Route to update Revenue
+@app.route('/update_revenue', methods=['POST'])
+def update_revenue():
+    user_id = request.form['user_id']
+    new_revenue = request.form['revenue']
+    
+    db = get_db()
+    db.execute('UPDATE music_rpm SET revenue = ? WHERE user_id = ?', (new_revenue, user_id))
+    db.execute('UPDATE users SET last_updated = CURRENT_TIMESTAMP WHERE user_id = ?', (user_id,))
+    db.commit()
 
-    return render_template('admin_update_account.html', users=users)
+    flash('Revenue updated successfully!')
+    return redirect(url_for('update_account'))
+
+# Route to upload YouTube image
+@app.route('/upload_youtube_image', methods=['POST'])
+def upload_youtube_image():
+    user_id = request.form['user_id']
+    youtube_image = request.files['youtube_image'].read()
+
+    db = get_db()
+    db.execute('UPDATE music_rpm SET youtube_image = ? WHERE user_id = ?', (youtube_image, user_id))
+    db.execute('UPDATE users SET last_updated = CURRENT_TIMESTAMP WHERE user_id = ?', (user_id,))
+    db.commit()
+
+    flash('YouTube image uploaded successfully!')
+    return redirect(url_for('update_account'))

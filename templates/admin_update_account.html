@@ -1,59 +1,71 @@
 {% extends "base.html" %}
 {% block main_content %}
 
-<!-- Search form to filter users by username -->
+<!-- Search and Sorting Form -->
 <form method="GET" action="{{ url_for('update_account') }}">
-    <input type="text" name="search" placeholder="Search by username" value="{{ request.args.get('search', '') }}">
+    <input type="text" name="search" placeholder="Search by username" value="{{ search_query }}">
     <button type="submit">Search</button>
     <select name="sort" onchange="this.form.submit()">
-        <option value="last_updated" {% if request.args.get('sort') == 'last_updated' %}selected{% endif %}>Last Updated</option>
-        <option value="username" {% if request.args.get('sort') == 'username' %}selected{% endif %}>Username</option>
+        <option value="last_updated" {% if sort_order == 'last_updated' %}selected{% endif %}>Last Updated</option>
+        <option value="username" {% if sort_order == 'username' %}selected{% endif %}>Username</option>
+        <option value="is_premium" {% if sort_order == 'is_premium' %}selected{% endif %}>Premium Status</option>
     </select>
 </form>
 
+<!-- Users Table -->
 <table>
     <tr>
         <th>Username</th>
+        <th>Premium Status</th>
         <th>RPM</th>
         <th>Revenue</th>
         <th>Upload YouTube Image</th>
         <th>Last Updated</th>
     </tr>
+
+    <!-- Loop through the list of users -->
     {% for user in users %}
     <tr>
-        <td>{{ user.username }}</td>
-
-        <!-- RPM Update -->
+        <td>{{ user.user_id }}</td> <!-- Display user_id instead of username -->
+        <td>{{ 'Premium' if user.is_premium else 'Non-Premium' }}</td>
+        
+        <!-- RPM Update Form -->
         <td>
-            <form method="POST" style="display: inline;">
+            <form method="POST" action="{{ url_for('update_rpm') }}">
                 <input type="hidden" name="user_id" value="{{ user.user_id }}">
-                <input type="text" name="rpm" placeholder="RPM" value="{{ user.rpm or 0 }}">
+                <input type="text" name="rpm" value="{{ user.rpm }}">
                 <button type="submit">Update RPM</button>
             </form>
         </td>
 
-        <!-- Revenue Update -->
+        <!-- Revenue Update Form -->
         <td>
-            <form method="POST" style="display: inline;">
+            <form method="POST" action="{{ url_for('update_revenue') }}">
                 <input type="hidden" name="user_id" value="{{ user.user_id }}">
-                <input type="text" name="revenue" placeholder="Revenue" value="{{ user.revenue or 0 }}">
+                <input type="text" name="revenue" value="{{ user.revenue }}">
                 <button type="submit">Update Revenue</button>
             </form>
         </td>
-
-        <!-- YouTube Image Upload -->
+        
+        <!-- YouTube Image Upload Form -->
         <td>
-            <form method="POST" enctype="multipart/form-data" style="display: inline;">
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_youtube_image') }}">
                 <input type="hidden" name="user_id" value="{{ user.user_id }}">
                 <input type="file" name="youtube_image">
                 <button type="submit">Upload Image</button>
             </form>
         </td>
-
-        <!-- Last Updated (Display only) -->
+        
         <td>{{ user.last_updated }}</td>
     </tr>
     {% endfor %}
 </table>
+
+<!-- Handle No Users Case -->
+{% if not users %}
+    <p>No users found</p>
+{% else %}
+    <p>Users found: {{ users | length }}</p>
+{% endif %}
 
 {% endblock %}
